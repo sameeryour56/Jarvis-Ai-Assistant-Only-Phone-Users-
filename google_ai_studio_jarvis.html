@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#070b14">
+<title>JARVIS - Google AI Studio Personal Assistant</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#070b14;color:#eaf6ff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+.container{max-width:560px;margin:0 auto;padding:14px 14px 24px}
+header{display:flex;justify-content:space-between;align-items:center}
+.brand h1{margin:0;font-size:26px;letter-spacing:2px;color:#7fe7ff;text-shadow:0 0 18px #00cfff}
+.badge{font-size:11px;border:1px solid #1fd6ff;border-radius:20px;padding:4px 9px;color:#8be9ff}
+.iconbtn{background:#0e2233;border:1px solid #1c4b66;color:#fff;border-radius:10px;padding:8px 10px;font-size:16px;cursor:pointer}
+.reactor{position:relative;width:230px;height:230px;margin:18px auto 6px}
+.ring{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(0,210,255,.55);box-shadow:0 0 24px rgba(0,210,255,.35),inset 0 0 24px rgba(0,210,255,.25)}
+.ring2{inset:18px;border-style:dashed;animation:spin 14s linear infinite}
+.ring3{inset:38px;border-color:rgba(120,240,255,.7);animation:spinRev 9s linear infinite}
+.core{position:absolute;inset:62px;border-radius:50%;background:radial-gradient(circle,#fff 0%,#7fe7ff 28%,#0099cc 62%,#00334d 100%);box-shadow:0 0 45px #00d5ff,0 0 90px rgba(0,213,255,.5);display:flex;align-items:center;justify-content:center;text-align:center;animation:pulse 2.4s ease-in-out infinite}
+.core span{font-size:11px;font-weight:700;letter-spacing:1px;color:#042233;padding:10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes spinRev{to{transform:rotate(-360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+#voiceState{text-align:center;font-weight:700;color:#7fe7ff;letter-spacing:1px;margin:6px 0 2px}
+#liveText{text-align:center;min-height:20px;color:#ffd166;font-size:14px}
+#aiStatus{text-align:center;font-size:13px;color:#9fb8c9}
+canvas{width:100%;height:58px;background:#081527;border:1px solid #173a52;border-radius:12px;display:block}
+#transcript{margin-top:12px;background:#0a1826;border:1px solid #173a52;border-radius:14px;padding:12px;max-height:340px;overflow:auto}
+.msg{margin:0 0 10px;line-height:1.5;font-size:15px}
+.msg b{color:#7fe7ff}
+.msg.user b{color:#ffd166}
+.hint{font-size:13px;color:#9fb8c9;line-height:1.5}
+#actionBanner{display:none;background:#102a1e;border:1px solid #2fbf71;border-radius:14px;padding:12px;margin-top:12px}
+#actionBanner.show{display:block}
+#actionBanner input,#actionBanner textarea{width:100%;margin:6px 0;padding:10px;border-radius:9px;border:1px solid #35566e;background:#081527;color:#fff;font-size:15px}
+#actionBanner label{font-size:13px;color:#bfefff}
+.btn{border:0;border-radius:10px;padding:10px 14px;font-size:15px;cursor:pointer;font-weight:700}
+.btn-green{background:#22c55e;color:#04220f}
+.btn-grey{background:#243b4d;color:#fff}
+#storyBar{display:none;gap:8px;margin-top:12px;flex-wrap:wrap}
+#storyBar.show{display:flex}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.chip{background:#102a3d;border:1px solid #25617f;color:#dff6ff;border-radius:20px;padding:9px 12px;cursor:pointer;font-size:14px}
+.footer{display:flex;gap:8px;margin-top:14px;align-items:center}
+#micBtn{width:62px;height:62px;flex:0 0 62px;border-radius:50%;border:0;background:radial-gradient(circle,#7fe7ff,#0077b6);font-size:28px;cursor:pointer;box-shadow:0 0 22px rgba(0,213,255,.7)}
+#micBtn.listening{background:radial-gradient(circle,#ffd166,#ff7a18);box-shadow:0 0 26px rgba(255,170,0,.8)}
+#textInput{flex:1;padding:13px;border-radius:12px;border:1px solid #35566e;background:#0a1826;color:#fff;font-size:16px}
+.send{background:#00a8d6;color:#fff}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:10;align-items:flex-start;justify-content:center;padding:18px;overflow:auto}
+.modal.show{display:flex}
+.card{background:#0b1d2e;border:1px solid #2a4a63;border-radius:16px;padding:16px;width:100%;max-width:520px}
+.card label{display:block;margin:10px 0 4px;color:#bfefff;font-size:14px}
+.card input,.card select{width:100%;padding:11px;border-radius:9px;border:1px solid #35566e;background:#081527;color:#fff;font-size:15px}
+.card input[type=range]{padding:0}
+.row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.small{font-size:13px;color:#9fb8c9;line-height:1.5}
+.danger{background:#7f1d1d;color:#fff}
+#seBanner{display:flex;gap:8px;align-items:center;justify-content:space-between;background:linear-gradient(90deg,#1a2a4a,#3a2a00);border:1px solid #ffd166;border-radius:12px;padding:10px 12px;margin-top:14px;font-size:14px;line-height:1.4}
+#seBanner a{flex:0 0 auto;background:#ffd166;color:#1a1a00;text-decoration:none;font-weight:700;border-radius:20px;padding:7px 12px}
+#seBannerClose{background:transparent;border:0;color:#fff;font-size:16px;cursor:pointer;padding:4px}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div class="brand"><span class="badge">GOOGLE AI STUDIO • SYS: ONLINE</span><h1>J.A.R.V.I.S.</h1></div>
+    <div>
+      <button class="iconbtn" id="clearChatBtn" title="Chat saaf karo">🗑️</button>
+      <button class="iconbtn" id="memoryBtn" title="Memory">🧠</button>
+      <button class="iconbtn" id="settingsBtn" title="Settings">⚙️</button>
+    </div>
+  </header>
+
+  <div id="seBanner"><span>📚 <b>SEbooksaller</b> — Hindi Ebooks, <b>₹49 se</b> shuru</span><a href="https://muse.ai/s/ebook-store-xhc63xfuxrsv2xn/3kZAE072X8CAfs2-CmlALWhXAlwa2-CjL0yoMypvr_Y" target="_blank" rel="noopener">Store kholo ➤</a><button id="seBannerClose" title="Banner band karo">✕</button></div>
+
+  <div class="reactor"><div class="ring"></div><div class="ring ring2"></div><div class="ring ring3"></div><div class="core"><span id="statusLabel">STANDBY</span></div></div>
+  <div id="voiceState">STANDBY</div>
+  <div id="liveText"></div>
+  <div id="aiStatus">AI Brain: OFF - bina key ke sirf simple commands chalenge</div>
+  <canvas id="wave" width="520" height="58"></canvas>
+
+  <div id="transcript"></div>
+  <p class="hint">Sachai note: Ye web JARVIS sirf link kholta hai. WhatsApp me message prefill hoga, Send tumko dabana hoga. Call par dialer khulega aur number bhara hoga, green call button tumko dabana hoga. YouTube, Instagram ya WhatsApp ke andar ka tap, play ya skip is page se control nahi hoga. Google AI Studio ki key sirf tumhare browser me save hoti hai, aur sirf Google ke AI endpoint ko HTTPS se bheji jati hai.</p>
+
+  <div id="actionBanner">
+    <b id="actionTitle">Confirm karo</b>
+    <div id="actionFields"></div>
+    <p class="small" id="actionNote"></p>
+    <div class="row">
+      <button class="btn btn-grey" id="actionCancelBtn">Cancel</button>
+      <button class="btn btn-green" id="actionConfirmBtn">Confirm aur kholo</button>
+    </div>
+  </div>
+
+  <div id="storyBar">
+    <button class="btn btn-grey" id="pauseStoryBtn">⏸️ Story pause karo</button>
+    <button class="btn btn-grey" id="resumeStoryBtn">▶️ Aage sunao</button>
+    <button class="btn danger" id="stopStoryBtn">⏹️ Story band karo</button>
+  </div>
+
+  <div class="chips">
+    <button class="chip" data-cmd="Ek funny reel chalao">🎬 Reel chalao</button>
+    <button class="chip" data-cmd="YouTube par relaxing music chalao">🎵 Music</button>
+    <button class="chip" data-cmd="WhatsApp kholo">💬 WhatsApp</button>
+    <button class="chip" data-cmd="Ek horror story sunao">📖 Story</button>
+    <button class="chip" data-cmd="Calendar kholo">📅 Calendar</button>
+    <button class="chip" data-cmd="Phone app kholo">📞 Call</button>
+  </div>
+
+  <div class="footer">
+    <button id="micBtn" title="Mic on / off">🎤</button>
+    <input id="textInput" placeholder="JARVIS ko likho ya mic dabao..." autocomplete="off">
+    <button class="btn send" id="sendBtn">➤</button>
+    <button class="btn btn-grey" id="stopBtn" title="Bolna roko">⏹️</button>
+  </div>
+  <p class="small">Mic dobara dabane se bolna ruk jayega aur sunna shuru ho jayega. Voice ke liye Chrome Android sabse achha hai. Agar mic error aaye to page ko HTTPS par kholo, file par kuch Chrome me mic block ho sakta hai. Tab bhi likhkar wale commands chalenge.</p>
+</div>
+
+<div class="modal" id="settingsModal"><div class="card">
+  <h3 style="margin:0">JARVIS Settings - Google AI Studio</h3>
+  <label>Google AI Studio API Key (aistudio.google.com se milegi)</label>
+  <input type="password" id="apiKeyInput" placeholder="AIza... - key yahan paste karo">
+  <label>Gemini Model</label>
+  <select id="modelSelect"><option value="gemini-2.5-flash">gemini-2.5-flash (default)</option><option value="gemini-2.0-flash">gemini-2.0-flash</option><option value="gemini-1.5-flash">gemini-1.5-flash</option></select>
+  <label>Custom Model naam (optional, khaali chhodo to upar wala chalega)</label>
+  <input id="customModelInput" placeholder="Jaise: gemini-2.5-flash">
+  <label>Bolne / sunne ki language</label>
+  <select id="langSelect"><option value="hi-IN">Hindi / Hinglish (hi-IN)</option><option value="en-IN">English India (en-IN)</option><option value="en-US">English US (en-US)</option></select>
+  <label>Voice (phone me available voices me se chuno)</label>
+  <select id="voiceSelect"></select>
+  <label>Pitch: <span id="pitchVal">1.1</span></label>
+  <input type="range" id="pitchRange" min="0.5" max="1.6" step="0.1" value="1.1">
+  <label>Speed: <span id="rateVal">1</span></label>
+  <input type="range" id="rateRange" min="0.7" max="1.3" step="0.05" value="1">
+  <label>Favorite music / singer</label>
+  <input id="favMusicInput" placeholder="Jaise: Arijit Singh">
+  <p class="small">Key bina bhi simple commands, stories, YouTube, WhatsApp prefill, dialer aur Calendar page kaam karenge. Tum jo natural tarike se bologe, usko samajhne ke liye key chahiye. Key kisi ko mat bhejo, screenshot me mat dikhao. Agar key leak ho jaye to Google AI Studio me delete karke nayi banao.</p>
+  <div class="row"><button class="btn btn-grey" id="closeSettingsBtn">Band karo</button><button class="btn btn-green" id="saveSettingsBtn">Save karo</button></div>
+</div></div>
+
+<div class="modal" id="memoryModal"><div class="card">
+  <h3 style="margin:0">Memory Vault</h3>
+  <p class="small">Sirf tumhari pasand aur tumhare sikhaye contact naam save hote hain. Password, OTP ya bank detail kabhi save nahi hoti.</p>
+  <div id="memoryList"></div>
+  <div class="row"><button class="btn btn-grey" id="closeMemoryBtn">Band karo</button><button class="btn danger" id="wipeMemoryBtn">Sab memory delete karo</button></div>
+</div></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const transcriptEl=$('transcript'), liveText=$('liveText'), statusLabel=$('statusLabel'), voiceState=$('voiceState');
+let prefs=JSON.parse(localStorage.getItem('jarvis_gemini_prefs')||'{}');
+if(!prefs.lang) prefs.lang='hi-IN'; if(!prefs.pitch) prefs.pitch=1.1; if(!prefs.rate) prefs.rate=1; if(!prefs.model) prefs.model='gemini-2.5-flash';
+let contacts=JSON.parse(localStorage.getItem('jarvis_contacts')||'{}');
+let chat=JSON.parse(localStorage.getItem('jarvis_gemini_chat')||'[]');
+let listening=false, speaking=false, storyMode=false, speakQueue=[], speakIndex=0, pendingConfirm=null, currentVoice=null;
+
+function updateAiStatus(){ $('aiStatus').textContent = prefs.apiKey ? ('AI Brain: ON - Google AI Studio, model '+(prefs.customModel||prefs.model)) : 'AI Brain: OFF - bina key ke sirf simple commands chalenge'; }
+function setState(label,mode){statusLabel.textContent=label;voiceState.textContent=label;window.__waveMode=mode||'idle';}
+function saveChat(){try{localStorage.setItem('jarvis_gemini_chat',JSON.stringify(chat.slice(-50)))}catch(e){}}
+function saveContacts(){try{localStorage.setItem('jarvis_contacts',JSON.stringify(contacts))}catch(e){}}
+function escapeHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function addMsg(role,text,speakIt){
+  chat.push({role:role,text:text}); saveChat();
+  const d=document.createElement('div'); d.className='msg '+(role==='user'?'user':'');
+  d.innerHTML='<b>'+(role==='user'?'Aap':'JARVIS')+':</b> '+escapeHtml(text); transcriptEl.appendChild(d); transcriptEl.scrollTop=transcriptEl.scrollHeight;
+  if(speakIt) speak(text);
+}
+function renderChat(){transcriptEl.innerHTML=''; chat.forEach(m=>{const d=document.createElement('div'); d.className='msg '+(m.role==='user'?'user':''); d.innerHTML='<b>'+(m.role==='user'?'Aap':'JARVIS')+':</b> '+escapeHtml(m.text); transcriptEl.appendChild(d);}); transcriptEl.scrollTop=transcriptEl.scrollHeight;}
+
+const canvas=$('wave'), ctx=canvas.getContext('2d');
+function drawWave(){
+  ctx.clearRect(0,0,canvas.width,canvas.height); const mode=window.__waveMode||'idle'; const t=Date.now()/180;
+  for(let i=0;i<48;i++){let amp=mode==='listening'?0.85:mode==='speaking'?0.7:mode==='thinking'?0.35:0.15; let h=(Math.abs(Math.sin(t+i*0.55))*amp+0.08)*44; ctx.fillStyle=mode==='listening'?'#ffd166':'#00d5ff'; ctx.fillRect(6+i*10.5,29-h/2,6,h);}
+  requestAnimationFrame(drawWave);
+} drawWave();
+
+function loadVoices(){
+  const voices=speechSynthesis.getVoices(); const sel=$('voiceSelect'); sel.innerHTML='';
+  voices.forEach(v=>{const o=document.createElement('option'); o.value=v.voiceURI; o.textContent=v.name+' ('+v.lang+')'; sel.appendChild(o);});
+  if(prefs.voiceURI) sel.value=prefs.voiceURI;
+  else {const hindi=voices.find(v=>v.lang && v.lang.toLowerCase().startsWith('hi')); if(hindi) sel.value=hindi.voiceURI;}
+  currentVoice=voices.find(v=>v.voiceURI===sel.value)||voices[0]||null;
+}
+if('speechSynthesis' in window){loadVoices(); speechSynthesis.onvoiceschanged=loadVoices;}
+
+function splitChunks(text){
+  const parts=(String(text).match(/[^.!?।]+[.!?।]+|[^.!?।]+$/g)||[text]).map(s=>s.trim()).filter(Boolean); const out=[];
+  parts.forEach(p=>{while(p.length>220){let cut=p.lastIndexOf(' ',220); if(cut<80) cut=220; out.push(p.slice(0,cut)); p=p.slice(cut).trim();} if(p) out.push(p);});
+  return out;
+}
+function speak(text,opts){
+  if(!('speechSynthesis' in window)){return;}
+  if(!opts || !opts.keepQueue){speechSynthesis.cancel(); speakQueue=[]; speakIndex=0;}
+  if(opts && opts.story){storyMode=true; $('storyBar').classList.add('show');}
+  speakQueue=splitChunks(text); speakIndex=0; speaking=true; setState('BOL RAHI HOON','speaking'); playNext();
+}
+function playNext(){
+  if(speakIndex>=speakQueue.length){speaking=false; storyMode=false; $('storyBar').classList.remove('show'); setState('STANDBY','idle'); return;}
+  const u=new SpeechSynthesisUtterance(speakQueue[speakIndex]);
+  if(currentVoice) u.voice=currentVoice; u.lang=prefs.lang||'hi-IN'; u.pitch=parseFloat(prefs.pitch||1.1); u.rate=parseFloat(prefs.rate||1);
+  u.onend=()=>{speakIndex++; playNext();}; u.onerror=()=>{speakIndex++; playNext();};
+  speechSynthesis.speak(u);
+}
+function stopSpeaking(){speechSynthesis.cancel(); speakQueue=[]; speakIndex=0; speaking=false; storyMode=false; $('storyBar').classList.remove('show'); setState('STANDBY','idle');}
+
+let recognition=null;
+function getRecognition(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR) return null;
+  if(recognition) return recognition;
+  recognition=new SR(); recognition.interimResults=true; recognition.continuous=false;
+  recognition.onresult=e=>{let interim='',final=''; for(let i=e.resultIndex;i<e.results.length;i++){if(e.results[i].isFinal) final+=e.results[i][0].transcript; else interim+=e.results[i][0].transcript;} liveText.textContent=interim||final; if(final){$('textInput').value=final; handleCommand(final);} };
+  recognition.onerror=e=>{
+    listening=false; $('micBtn').classList.remove('listening'); setState('STANDBY','idle');
+    if(e.error==='not-allowed' || e.error==='service-not-allowed'){addMsg('jarvis','Mic ki permission nahi mili. Chrome me is site ke liye Mic Allow karo, page reload karo, aur ho sake to page HTTPS par kholo. Tab tak neeche likhkar bhi command de sakte ho.',true);}
+    else if(e.error==='no-speech'){addMsg('jarvis','Maine kuch suna nahi. Dobara mic dabakar bolo.',false);}
+    else {addMsg('jarvis','Voice sunne me dikkat aayi: '+e.error+'. Likhkar command de sakte ho.',false);}
+  };
+  recognition.onend=()=>{listening=false; $('micBtn').classList.remove('listening'); if(!speaking) setState('STANDBY','idle'); liveText.textContent='';};
+  return recognition;
+}
+function toggleMic(){
+  if(speaking) stopSpeaking();
+  const rec=getRecognition();
+  if(!rec){addMsg('jarvis','Is browser me voice recognition supported nahi hai. Chrome Android use karo, ya neeche likhkar command do.',false); return;}
+  if(listening){try{rec.stop();}catch(e){} listening=false; $('micBtn').classList.remove('listening'); setState('STANDBY','idle'); return;}
+  rec.lang=prefs.lang||'hi-IN';
+  try{rec.start(); listening=true; $('micBtn').classList.add('listening'); setState('SUN RAHI HOON','listening');}catch(e){addMsg('jarvis','Mic shuru nahi hua. Ek second rukkar dobara dabao.',false);}
+}
+$('micBtn').onclick=toggleMic; $('stopBtn').onclick=stopSpeaking;
+$('seBannerClose').onclick=()=>{const b=$('seBanner'); if(b) b.style.display='none';};
+$('pauseStoryBtn').onclick=()=>{if(storyMode){speechSynthesis.pause(); setState('PAUSED','idle');}};
+$('resumeStoryBtn').onclick=()=>{if(storyMode){speechSynthesis.resume(); setState('BOL RAHI HOON','speaking');}};
+$('stopStoryBtn').onclick=()=>{stopSpeaking(); addMsg('jarvis','Theek hai, story band kar di.',false);};
+
+function showAction(title,note,fields,fn){
+  $('actionTitle').textContent=title; $('actionNote').textContent=note||'';
+  $('actionFields').innerHTML=fields.map(f=>'<label>'+f.label+'</label>'+(f.type==='textarea'?'<textarea id="af_'+f.id+'" rows="3">'+escapeHtml(f.value||'')+'</textarea>':'<input id="af_'+f.id+'" type="'+(f.inputType||'text')+'" value="'+escapeHtml(f.value||'')+'" placeholder="'+escapeHtml(f.placeholder||'')+'">')).join('');
+  $('actionBanner').classList.add('show'); pendingConfirm=()=>{const vals={}; fields.forEach(f=>{vals[f.id]=$('af_'+f.id).value.trim();}); hideAction(); fn(vals);};
+  $('actionBanner').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function hideAction(){$('actionBanner').classList.remove('show'); pendingConfirm=null;}
+$('actionCancelBtn').onclick=()=>{hideAction(); addMsg('jarvis','Theek hai, cancel kar diya.',false);};
+$('actionConfirmBtn').onclick=()=>{if(pendingConfirm) pendingConfirm();};
+
+function openExternal(url){
+  if(url.startsWith('tel:') || url.startsWith('mailto:')){window.location.href=url; return;}
+  const w=window.open(url,'_blank');
+  if(!w){showAction('Link kholo','Popup block ho gaya lagta hai. Neeche button dabao.',[{label:'Link',id:'link',value:url}],()=>{window.open(url,'_blank');});}
+}
+function openYouTube(q){addMsg('jarvis','YouTube khol rahi hoon: '+q+'. Video YouTube app ya site me chalega, is page se uska play ya pause control nahi hoga.',false); openExternal('https://www.youtube.com/results?search_query='+encodeURIComponent(q));}
+function digitsOnly(s){return (String(s).match(/\d+/g)||[]).join('');}
+function toLatinDigits(s){const m={'०':'0','१':'1','२':'2','३':'3','४':'4','५':'5','६':'6','७':'7','८':'8','९':'9'}; return String(s).replace(/[०-९]/g,c=>m[c]);}
+function normalizeText(s){
+  let x=toLatinDigits(String(s).toLowerCase());
+  const rep={'कॉल':'call','फ़ोन':'phone','फोन':'phone','व्हाट्सऐप':'whatsapp','व्हाट्सएप':'whatsapp','रील्स':'reels','रील':'reel','यूट्यूब':'youtube','चलाओ':'chalao','चला दो':'chala do','खोलो':'kholo','खोल':'kholo','मम्मी':'mummy','कहानी':'story','सुनाओ':'sunao','गाना':'gaana','संगीत':'music','ईमेल':'email','कैलेंडर':'calendar','जोक':'joke',' कि ':' ki ',' की ':' ki '};
+  for(const k in rep){x=x.split(k).join(rep[k]);}
+  return x;
+}
+const NUMWORDS={shunya:'0',zero:'0',ek:'1',one:'1',do:'2',two:'2',teen:'3',three:'3',char:'4',chaar:'4',four:'4',panch:'5',paanch:'5',five:'5',chhe:'6',chhah:'6',six:'6',saat:'7',sath:'7',seven:'7',aath:'8',eight:'8',nau:'9',nine:'9'};
+function spokenNumber(raw){
+  let s=toLatinDigits(String(raw||'').toLowerCase());
+  s=s.replace(/शून्य/g,'zero').replace(/एक/g,'one').replace(/दो/g,'two').replace(/तीन/g,'three').replace(/चार/g,'four').replace(/पाँच/g,'five').replace(/पांच/g,'five').replace(/छह/g,'six').replace(/सात/g,'seven').replace(/आठ/g,'eight').replace(/नौ/g,'nine');
+  const groups=(s.match(/\d+/g)||[]); const long=groups.find(g=>g.length>=10); if(long) return long.slice(-10);
+  const toks=s.split(/[^a-z]+/).filter(Boolean); let out='',i=0;
+  while(i<toks.length){const w=toks[i]; if((w==='double'||w==='triple') && i+1<toks.length && NUMWORDS[toks[i+1]]){const n=w==='double'?2:3; out+=NUMWORDS[toks[i+1]].repeat(n); i+=2;} else if(NUMWORDS[w]){out+=NUMWORDS[w]; i++;} else i++;}
+  if(out.length>=7) return out.slice(-10);
+  const g7=groups.find(g=>g.length>=7); if(g7) return g7.slice(-10);
+  return '';
+}
+function findContact(t){const keys=Object.keys(contacts).sort((a,b)=>b.length-a.length); for(const k of keys){if(t.includes(k)) return {name:k,number:contacts[k]};} return null;}
+
+const STORIES={
+ horror:{title:'Horror story',text:'Ek chhote gaon me ek purana ghar tha. Log kehte the ki raat ko us ghar se kisi ke chalne ki awaaz aati hai. Ek raat Riya ne himmat karke andar jaane ka faisla kiya. Darwaza khulte hi thandi hawa uske chehre se takrai. Andar ek purani photo thi, jisme ek ladki muskara rahi thi. Achanak photo ki aankhen hil gayi. Riya ne darwaze ki taraf daud lagayi, lekin darwaza apne aap band ho gaya. Tab ek dheemi awaaz aayi, mat daro, main sirf apni kahani sunana chahti hoon.'},
+ bedtime:{title:'Bedtime story',text:'Chandni raat me ek chhota khargosh apne ghar wapas ja raha tha. Raste me usko ek thaka hua jugnu mila, jiski roshni dheemi ho gayi thi. Khargosh ne use apne paas bithaya aur kaha, aaram karo, subah sab theek ho jayega. Jugnu ne muskarakar kaha, tumhari baat sunkar hi meri roshni wapas aa gayi. Dono ne taaron ko dekha, dheemi hawa me pedon ki sarsarahat suni, aur dheere dheere neend ki duniya me chale gaye. Tum bhi ab aankhen band karo, lambi saans lo, aur achhe sapnon ki taraf chalo. Shubh ratri.'},
+ funny:{title:'Funny story',text:'Ek din ek tota apne malik ka phone utha kar bola, hello, main tota bol raha hoon. Doosri taraf se awaaz aayi, achha, to aaj khana kaun banayega. Tota bola, jo pehle hassega, wahi banayega. Malik ne hasna roka, lekin tota zor zor se hasne laga. Aakhir me malik bhi has pada aur bola, theek hai, aaj khana main banata hoon.'},
+ children:{title:'Children story',text:'Ek chhoti chidiya ko udna nahi aata tha. Uske dost use sikhane aaye. Pehle din wo gir gayi, doosre din wo thoda upar uthi, teesre din hawa ne use halka sa dhakka diya. Chidiya ne himmat nahi haari. Chauthe din usne pankh phailaye, aankhen band ki, aur achanak wo hawa me tairne lagi. Sab doston ne taaliyan bajayi.'}
+};
+const JOKES=[
+ 'Teacher ne poochha, homework kyun nahi kiya. Bachha bola, kyunki mera pen bhi so gaya tha.',
+ 'Maine apne phone se poochha, tum smart ho. Phone bola, charger lagao, phir baat karte hain.'
+];
+function tellStory(key){
+  const s=STORIES[key]||STORIES.children; addMsg('jarvis',s.title+': '+s.text,false); speak(s.text,{story:true});
+}
+function pickStory(t){
+  if(t.includes('horror') || t.includes('bhoot')) return 'horror';
+  if(t.includes('bedtime') || t.includes('sone') || t.includes('peaceful') || t.includes('shant')) return 'bedtime';
+  if(t.includes('funny') || t.includes('hasne') || t.includes('mazedaar')) return 'funny';
+  return 'children';
+}
+function calFmt(d){const p=n=>String(n).padStart(2,'0'); return d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'T'+p(d.getHours())+p(d.getMinutes())+'00';}
+
+// ---------- Google AI Studio brain ----------
+const SYSTEM_PROMPT = "Tum JARVIS ho, ek friendly female personal assistant. User Hindi, Hinglish ya English me bol sakta hai. Tumko sirf JSON dena hai, koi extra text nahi. JSON format: {\"reply\": \"chhota bolne layak jawab Hindi/Hinglish me\", \"action\": \"youtube_search ya reel ya whatsapp ya call ya open_app ya calendar_open ya email ya story ya joke ya time ya chat ya save_contact ya none\", \"query\": \"search ya app ka naam\", \"name\": \"contact ka naam agar bola ho\", \"number\": \"digits me number agar bola ho\", \"message\": \"whatsapp ya email ka message agar bola ho\", \"story_type\": \"horror ya bedtime ya funny ya children\"}. WhatsApp aur Call ke liye kabhi ye mat kaho ki message bhej diya ya call lag gayi, sirf kholne ya prefill ki baat kaho. Agar user sirf baat kar raha hai to action chat rakho.";
+function parseGeminiJson(text){
+  try{
+    let t=String(text||'').trim();
+    t=t.replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/\s*```$/,'');
+    const start=t.indexOf('{'), end=t.lastIndexOf('}');
+    if(start>=0 && end>start) t=t.slice(start,end+1);
+    return JSON.parse(t);
+  }catch(e){ return null; }
+}
+async function askGemini(text){
+  if(!prefs.apiKey) return null;
+  const model=prefs.customModel||prefs.model||'gemini-2.5-flash';
+  setState('SOCH RAHI HOON','thinking');
+  try{
+    const res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+encodeURIComponent(model)+':generateContent?key='+encodeURIComponent(prefs.apiKey),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:SYSTEM_PROMPT+'\nUser: '+text}]}],generationConfig:{temperature:0.7,maxOutputTokens:600}})});
+    const data=await res.json();
+    if(!res.ok) throw new Error((data.error && data.error.message)||('HTTP '+res.status));
+    const out=data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts && data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text;
+    if(!out) return null;
+    const parsed=parseGeminiJson(out);
+    if(parsed && parsed.reply) return parsed;
+    return {reply:out, action:'chat'};
+  }catch(e){
+    addMsg('jarvis','Google AI Studio se jawab nahi mila: '+e.message+'. Key, model naam aur internet check karo. Tab tak simple commands chalenge.',false);
+    return null;
+  } finally { setState('STANDBY','idle'); }
+}
+function executeGeminiAction(g, rawText){
+  const t=normalizeText(rawText);
+  const contact=g.name ? (contacts[g.name.toLowerCase()] ? {name:g.name.toLowerCase(),number:contacts[g.name.toLowerCase()]} : findContact(t)) : findContact(t);
+  const num=g.number ? (spokenNumber(g.number)||digitsOnly(g.number)) : (contact?contact.number:'');
+  if(g.action==='youtube_search'){ openYouTube(g.query||'music'); }
+  else if(g.action==='reel'){
+    if(!g.query){ addMsg('jarvis','Reels page khol rahi hoon. Video wahan chalega, reel par tap tumko karna hoga.',false); openExternal('https://www.instagram.com/reels/'); }
+    else { addMsg('jarvis','Reel search khol rahi hoon: '+g.query+'. Usme se reel chun kar play karo.',false); openExternal('https://www.youtube.com/results?search_query='+encodeURIComponent(g.query+' shorts')); }
+  }
+  else if(g.action==='whatsapp'){
+    if(t.includes('kholo')){ addMsg('jarvis','WhatsApp khol rahi hoon.',false); openExternal('https://wa.me/'); return; }
+    showAction('WhatsApp message taiyaar karo','Ye sirf prefill hoga. WhatsApp khulne ke baad Send tumko dabana hoga.',[{label:'Number (10 digit)',id:'num',value:num.length>=10?num.slice(-10):'',placeholder:'9876543210'},{label:'Message',id:'msg',type:'textarea',value:g.message||'Hi'}],vals=>{
+      const phone=spokenNumber(vals.num)||digitsOnly(vals.num); let url='https://wa.me/'; if(phone.length===10) url+='91'+phone+'/'; url+='?text='+encodeURIComponent(vals.msg||'');
+      addMsg('jarvis','WhatsApp khol rahi hoon, message prefill hoga. Send tum dabayenge.',false); openExternal(url);
+    });
+  }
+  else if(g.action==='call'){
+    showAction('Call ke liye number confirm karo','Dialer khulega aur number bhara hoga. Green call button tumko dabana hoga.',[{label:'Number',id:'num',value:num.length>=10?num.slice(-10):'',inputType:'tel',placeholder:'9876543210'}],vals=>{
+      const phone=spokenNumber(vals.num)||digitsOnly(vals.num); if(!phone){addMsg('jarvis','Number nahi mila, dialer nahi khola.',false); return;} addMsg('jarvis','Dialer khol rahi hoon, number bhara hoga.',false); openExternal('tel:'+phone);
+    });
+  }
+  else if(g.action==='open_app'){
+    const q=(g.query||'').toLowerCase();
+    const appMap={gmail:'https://mail.google.com/',calendar:'https://calendar.google.com/',youtube:'https://www.youtube.com/',whatsapp:'https://wa.me/',instagram:'https://www.instagram.com/',maps:'https://maps.google.com/'};
+    for(const k in appMap){ if(q.includes(k)){ addMsg('jarvis',k+' khol rahi hoon.',false); openExternal(appMap[k]); return; } }
+    if(q.includes('camera')||q.includes('settings')||q.includes('clock')){ addMsg('jarvis','Browser se Camera, Settings ya Clock app direct nahi khul sakti. Ye native Android app me hoga.',true); }
+  }
+  else if(g.action==='calendar_open'){ addMsg('jarvis','Calendar khol rahi hoon.',false); openExternal('https://calendar.google.com/'); }
+  else if(g.action==='email'){
+    const em=(rawText.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i)||[])[0]||'';
+    showAction('Email draft taiyaar karo','Ye mail draft kholega. Send tumko dabana hoga.',[{label:'To (email address)',id:'to',value:em,placeholder:'amit@example.com'},{label:'Subject',id:'subject',value:'Meeting'},{label:'Body',id:'body',type:'textarea',value:g.message||'Hi'}],vals=>{
+      if(!vals.to){addMsg('jarvis','Email address nahi mila, draft nahi khola.',false); return;} addMsg('jarvis','Email draft khol rahi hoon.',false); openExternal('mailto:'+encodeURIComponent(vals.to)+'?subject='+encodeURIComponent(vals.subject)+'&body='+encodeURIComponent(vals.body));
+    });
+  }
+  else if(g.action==='save_contact'){
+    const nm=(g.name||'').toLowerCase().trim(); const ph=spokenNumber(g.number||'')||digitsOnly(g.number||'');
+    if(nm && ph.length>=7){ contacts[nm]=ph.slice(-10); saveContacts(); addMsg('jarvis','Yaad rakh liya: '+nm+' ka number '+ph.slice(-10)+' save ho gaya.',false); }
+  }
+  // story, joke, time, chat: reply already spoken, no extra action
+}
+
+// ---------- Local fallback (bina key ke) ----------
+function localHandle(t, rawText){
+  if(t.includes('story') || t.includes('kahani')){ tellStory(pickStory(t)); return; }
+  if(t.includes('joke') || t.includes('hasao')){ addMsg('jarvis',JOKES[Math.floor(Math.random()*JOKES.length)],true); return; }
+  if(t.includes('time') || t.includes('baj rahe')){ addMsg('jarvis','Abhi time hai '+new Date().toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'})+'.',true); return; }
+  if(t.includes('youtube kholo')){ addMsg('jarvis','YouTube khol rahi hoon.',false); openExternal('https://www.youtube.com/'); return; }
+  let ym=t.match(/youtube (?:par|pe) (.+?) (?:chalao|play|chala do|khol|dikhao)/) || t.match(/(.+?) (?:song|gaana|music|video) (?:chalao|play|chala do)/);
+  if(ym){ openYouTube(ym[1].trim()); return; }
+  if(t.includes('reel') || t.includes('shorts')){
+    if(!t.replace(/ek|please|jarvis|reels|reel|shorts|chalao|play|kholo/g,'').trim()){ addMsg('jarvis','Reels page khol rahi hoon.',false); openExternal('https://www.instagram.com/reels/'); }
+    else { const q=t.replace(/ek|please|jarvis|reels|reel|shorts|chalao|play|kholo/g,'').trim(); addMsg('jarvis','Reel search khol rahi hoon: '+q+'.',false); openExternal('https://www.youtube.com/results?search_query='+encodeURIComponent(q+' shorts')); }
+    return;
+  }
+  if(t.includes('whatsapp')){
+    if(t.includes('kholo')){ addMsg('jarvis','WhatsApp khol rahi hoon.',false); openExternal('https://wa.me/'); return; }
+    let body=''; const ki=t.split(' ki '); if(ki.length>1) body=ki.slice(1).join(' ki ');
+    const contact=findContact(t); const num=spokenNumber(t)||digitsOnly(t); const preNum=contact?contact.number:(num.length>=10?num.slice(-10):'');
+    showAction('WhatsApp message taiyaar karo','Ye sirf prefill hoga. Send tumko dabana hoga.',[{label:'Number (10 digit)',id:'num',value:preNum,placeholder:'9876543210'},{label:'Message',id:'msg',type:'textarea',value:body||'Hi'}],vals=>{
+      const phone=spokenNumber(vals.num)||digitsOnly(vals.num); let url='https://wa.me/'; if(phone.length===10) url+='91'+phone+'/'; url+='?text='+encodeURIComponent(vals.msg||''); addMsg('jarvis','WhatsApp khol rahi hoon, message prefill hoga.',false); openExternal(url);
+    }); return;
+  }
+  if(t.includes('call') || t.includes('phone app') || t.includes('dialer') || t.includes('phone kholo')){
+    if(t.includes('phone app kholo') || t.includes('dialer kholo') || t.includes('phone kholo')){ addMsg('jarvis','Dialer khol rahi hoon.',false); openExternal('tel:'); return; }
+    const contact=findContact(t); const num=spokenNumber(t)||digitsOnly(t); const preNum=contact?contact.number:(num.length>=10?num.slice(-10):'');
+    showAction('Call ke liye number confirm karo','Dialer khulega, number bhara hoga. Green button tumko dabana hoga.',[{label:'Number',id:'num',value:preNum,inputType:'tel',placeholder:'9876543210'}],vals=>{
+      const phone=spokenNumber(vals.num)||digitsOnly(vals.num); if(!phone){addMsg('jarvis','Number nahi mila.',false); return;} addMsg('jarvis','Dialer khol rahi hoon.',false); openExternal('tel:'+phone);
+    }); return;
+  }
+  if(t.includes('gmail kholo')){ addMsg('jarvis','Gmail khol rahi hoon.',false); openExternal('https://mail.google.com/'); return; }
+  if(t.includes('calendar')){ addMsg('jarvis','Calendar khol rahi hoon.',false); openExternal('https://calendar.google.com/'); return; }
+  if(t.includes('instagram kholo')){ addMsg('jarvis','Instagram khol rahi hoon.',false); openExternal('https://www.instagram.com/'); return; }
+  if(t.includes('camera kholo') || t.includes('settings kholo') || t.includes('clock kholo')){ addMsg('jarvis','Browser se Camera, Settings ya Clock app direct nahi khul sakti. Ye native Android app me hoga.',true); return; }
+  addMsg('jarvis','Ye simple command se bahar hai. AI samajh ke liye Settings me Google AI Studio key daalo, ya ye try karo: YouTube par music chalao, ek story sunao, WhatsApp kholo, ya time batao.',true);
+}
+
+async function handleCommand(raw){
+  const text=String(raw||'').trim(); if(!text) return;
+  const t=normalizeText(text); addMsg('user',text,false);
+  if(listening){try{recognition && recognition.stop();}catch(e){}}
+  if(storyMode && (t.includes('pause') || t.includes('ruk jao'))){speechSynthesis.pause(); setState('PAUSED','idle'); addMsg('jarvis','Story pause kar di hai. Aage sunne ke liye Aage sunao bolo.',false); return;}
+  if(storyMode && (t.includes('aage sunao') || t.includes('continue'))){speechSynthesis.resume(); setState('BOL RAHI HOON','speaking'); addMsg('jarvis','Theek hai, story aage suna rahi hoon.',false); return;}
+  if(storyMode && (t.includes('band karo') || t.includes('stop karo'))){stopSpeaking(); addMsg('jarvis','Theek hai, story band kar di.',false); return;}
+  if(t.includes('music band karo') || t.includes('gaana band karo')){addMsg('jarvis','YouTube app ke andar ka music is page se band nahi ho sakta. YouTube app me jaakar pause dabao.',true); return;}
+  // Contact save - local, reliable
+  const saveM=t.match(/(.+?) ka number (.+?) (yaad rakho|save karo|save kar lo)/);
+  if(saveM){const nm=saveM[1].replace(/jarvis|please|ko/g,'').trim(); const num=spokenNumber(saveM[2])||digitsOnly(saveM[2]); if(num.length>=7 && nm){contacts[nm]=num.slice(-10); saveContacts(); addMsg('jarvis','Yaad rakh liya: '+nm+' ka number '+num.slice(-10)+' save ho gaya.',true);} else {addMsg('jarvis','Number poora nahi mila. Dobara bolo.',true);} return;}
+  if(t.includes('tum kaun ho') || t.includes('tumhara naam')){addMsg('jarvis','Main JARVIS hoon, tumhara Google AI Studio wala personal assistant. Main insaan nahi hoon, ek AI program hoon.',true); return;}
+  // Gemini brain first, if key present
+  if(prefs.apiKey){
+    const g=await askGemini(text);
+    if(g){
+      if(g.action==='story'){ addMsg('jarvis',g.reply,false); speak(g.reply,{story:true}); }
+      else { addMsg('jarvis',g.reply,true); }
+      executeGeminiAction(g, text);
+      return;
+    }
+    // Gemini fail hua to local fallback par jao, user ko pehle hi error dikh chuka hai
+  }
+  localHandle(t, text);
+}
+
+$('sendBtn').onclick=()=>{const v=$('textInput').value.trim(); if(v){$('textInput').value=''; handleCommand(v);}};
+$('textInput').addEventListener('keydown',e=>{if(e.key==='Enter'){const v=$('textInput').value.trim(); if(v){$('textInput').value=''; handleCommand(v);}}});
+document.querySelectorAll('.chip').forEach(c=>{c.onclick=()=>handleCommand(c.dataset.cmd);});
+$('settingsBtn').onclick=()=>{$('apiKeyInput').value=prefs.apiKey||''; $('modelSelect').value=prefs.model||'gemini-2.5-flash'; $('customModelInput').value=prefs.customModel||''; $('langSelect').value=prefs.lang||'hi-IN'; $('pitchRange').value=prefs.pitch; $('pitchVal').textContent=prefs.pitch; $('rateRange').value=prefs.rate; $('rateVal').textContent=prefs.rate; $('favMusicInput').value=prefs.favMusic||''; loadVoices(); $('settingsModal').classList.add('show');};
+$('closeSettingsBtn').onclick=()=>$('settingsModal').classList.remove('show');
+$('saveSettingsBtn').onclick=()=>{
+  prefs.apiKey=$('apiKeyInput').value.trim(); prefs.model=$('modelSelect').value; prefs.customModel=$('customModelInput').value.trim(); prefs.lang=$('langSelect').value; prefs.pitch=parseFloat($('pitchRange').value); prefs.rate=parseFloat($('rateRange').value); prefs.favMusic=$('favMusicInput').value.trim(); prefs.voiceURI=$('voiceSelect').value;
+  localStorage.setItem('jarvis_gemini_prefs',JSON.stringify(prefs)); loadVoices(); updateAiStatus(); $('settingsModal').classList.remove('show'); addMsg('jarvis',prefs.apiKey?'Settings save ho gayi. Google AI Studio brain ON hai.':'Settings save ho gayi. Key nahi hai, isliye sirf simple commands chalenge.',false);
+};
+$('pitchRange').oninput=e=>{$('pitchVal').textContent=e.target.value}; $('rateRange').oninput=e=>{$('rateVal').textContent=e.target.value};
+$('memoryBtn').onclick=()=>{
+  const list=$('memoryList'); const items=[];
+  if(prefs.lang) items.push('Language: '+prefs.lang);
+  if(prefs.favMusic) items.push('Favorite music: '+prefs.favMusic);
+  Object.keys(contacts).forEach(k=>items.push('Contact: '+k+' - number save hai (number yahan nahi dikhaya ja raha)'));
+  list.innerHTML=items.length?items.map(x=>'<div style="padding:8px 0;border-bottom:1px solid #1d3a50">'+escapeHtml(x)+'</div>').join(''):'<p>Abhi koi memory save nahi hai.</p>';
+  $('memoryModal').classList.add('show');
+};
+$('closeMemoryBtn').onclick=()=>$('memoryModal').classList.remove('show');
+$('wipeMemoryBtn').onclick=()=>{localStorage.removeItem('jarvis_gemini_prefs'); localStorage.removeItem('jarvis_gemini_chat'); localStorage.removeItem('jarvis_contacts'); prefs={lang:'hi-IN',pitch:1.1,rate:1,model:'gemini-2.5-flash'}; contacts={}; chat=[]; renderChat(); updateAiStatus(); $('memoryModal').classList.remove('show'); addMsg('jarvis','Memory delete kar di hai.',false);};
+$('clearChatBtn').onclick=()=>{chat=[]; saveChat(); renderChat(); addMsg('jarvis','Chat saaf kar diya. Batao, kya karna hai?',false);};
+
+renderChat(); updateAiStatus();
+if(chat.length===0){addMsg('jarvis','Systems online. Main JARVIS hoon, Google AI Studio se chalti hoon. Pehle Settings me apni Google AI Studio key daalo, phir jo bolna hai bolo. Bina key ke bhi simple commands chalenge. Jaise: YouTube par relaxing music chalao, ya ek horror story sunao.',false);}
+setState('STANDBY','idle');
+</script>
+</body>
+</html>
